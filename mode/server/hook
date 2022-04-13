@@ -1,0 +1,171 @@
+#!/bin/bash
+
+#
+# mediawiki hooks
+#
+
+function start_mediawiki() {
+    cd mediawiki ||
+        panic "mediawiki dir not found?"
+
+    # build docker images first
+    ./build.sh ||
+        panic "mediawiki build docker image failed?"
+
+    # up!
+    docker-compose -p mediawiki up -d  ||
+        panic "docker-compose up mediawiki failed?"
+
+    # if config exists, copy it! TODO
+    if [[ -f LocalSettings.php ]]; then
+        wm_container=$(docker ps -f "publish=2012" --format '{{.Names}}')
+        docker cp ./LocalSettings.php "$wm_container":/var/www/html/ ||
+            panic "docker cp to mediawiki faild?"
+    fi
+
+    cd ..
+}
+
+function stop_mediawiki() {
+    cd mediawiki ||
+        panic "mediawiki dir not found?"
+
+    # backup the config first; when compose down, it won't be persisted (not in volume)
+    wm_container=$(docker ps -f "publish=2012" --format '{{.Names}}')
+    docker cp "$wm_container":/var/www/html/LocalSettings.php ./ ||
+        panic "docker cp from mediawiki failed?"
+    
+    # down
+    docker-compose -p mediawiki down ||
+        panic "docker-compose down mediawiki failed?"
+
+    cd ..
+}
+
+#
+# miniflux hooks
+#
+
+function start_miniflux() {
+    cd "miniflux/contrib/docker-compose" ||
+        panic "miniflux dir not found?"
+
+    # calling the run (will display the password!)
+    ./run.sh ||
+        panic "miniflux run failed?"
+
+    cd ..
+}
+
+function stop_miniflux() {
+    cd "miniflux/contrib/docker-compose" ||
+        panic "miniflux dir not found?"
+
+    docker-compose -p miniflux down ||
+        panic "docker-compose down miniflux failed?"
+
+    cd ..
+}
+
+#
+# sourcegraph hooks
+#
+
+function start_sourcegraph() {
+    cd "sourcegraph/docker-compose" ||
+        panic "sourcegraph dir not found?"
+
+    docker-compose -p sourcegraph up -d ||
+        panic "docker-compose up sorcegraph failed?"
+
+    cd ..
+}
+
+function stop_sourcegraph() {
+    cd "sourcegraph/docker-compose" ||
+        panic "sourcegraph dir not found?"
+
+    docker-compose -p sourcegraph down ||
+        panic "docker-compose down sorcegraph failed?"
+
+    cd ..
+}
+
+#
+# caddy hooks
+# TODO: docker?
+#
+
+function start_caddy() {
+    cd caddy ||
+        panic "caddy dir not found?"
+
+    # build caddy firstly (with dnspod plugin)
+    xcaddy build --with github.com/caddy-dns/dnspod ||
+        panic "xcaddy build failed?"
+    
+    # we should give caddy a permission to listen sockets
+    if ! getcap caddy | grep -q "cap_net_bind_service=ep"; then
+        # must sudo... FIXME?
+        sudo setcap 'cap_net_bind_service=+ep' caddy ||
+            panic "setcap for caddy failed?"
+    fi
+    
+    # install user systemd file if not exists
+    # TODO: always relink?
+    if [[ ! -e ~/.config/systemd/user/caddy.service ]]; then
+        mkdir -p ~/.config/systemd/user
+        sed "s%\$CADDYBIN%$PWD/caddy%g" init/caddy.service > ~/.config/systemd/user/caddy.service
+        sed -i "s%\$CADDYFILE%$PWD/config/Caddyfile%g" ~/.config/systemd/user/caddy.service
+
+        # FIXME: no prompt? seems impossible...
+        read -rp "dnspod_appid: " app_id
+        read -rp "dnspod_token: " api_key
+        local token="$app_id,$api_key"
+        sed -i "s/\$DNSPOD_TOKEN/$token/g" ~/.config/systemd/user/caddy.service
+
+        # reload daemon
+        systemctl --user daemon-reload
+    fi
+
+    # enable & start!
+    systemctl --user enable caddy
+    systemctl --user start caddy
+
+    cd ..
+}
+
+function stop_caddy() {
+    # stop using systemctl...
+    # TODO: revert settings?
+    systemctl --user stop caddy ||
+        panic "systemctl stop caddy failed?"
+}
+
+#
+# frp hooks
+# TODO
+#
+
+#
+# Hooks
+# TODO: merge...
+#
+
+function on_start() {
+    local srvs="$*"
+    for srv in $srvs; do
+        local do_start="start_$srv"
+        assert_is_function "$do_start"
+        do_start
+    done
+}
+
+function on_stop() {
+    local srvs="$*"
+    for srv in $srvs; do
+        local do_stop="stop_$srv"
+        assert_is_function "$do_stop"
+        do_stop
+    done
+}
