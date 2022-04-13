@@ -1,12 +1,12 @@
 [submodule "mode/server/sourcegraph"]
 	path = mode/server/sourcegraph
-	url = https://github.com/mscratch/sourcegraph-docker
+	url = git@github.com:mscratch/sourcegraph-docker.git
 [submodule "mode/server/mediawiki"]
 	path = mode/server/mediawiki
-	url = https://github.com/mscratch/mediawiki-docker
+	url = git@github.com:mscratch/mediawiki-docker.git
 [submodule "mode/server/miniflux"]
 	path = mode/server/miniflux
-	url = https://github.com/mscratch/miniflux-docker
+	url = git@github.com:mscratch/miniflux-docker.git
 [submodule "mode/server/caddy"]
 	path = mode/server/caddy
 	url = git@github.com:mscratch/caddy-dist.git

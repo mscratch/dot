@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: make service expose nothing to public (except for caddy)
+
 #
 # mediawiki hooks
 #
@@ -32,9 +34,11 @@ function stop_mediawiki() {
 
     # backup the config first; when compose down, it won't be persisted (not in volume)
     wm_container=$(docker ps -f "publish=2012" --format '{{.Names}}')
-    docker cp "$wm_container":/var/www/html/LocalSettings.php ./ ||
-        panic "docker cp from mediawiki failed?"
-    
+    if [[ $wm_container ]]; then
+        docker cp "$wm_container":/var/www/html/LocalSettings.php ./ ||
+            panic "docker cp from mediawiki failed?"
+    fi
+
     # down
     docker-compose -p mediawiki down ||
         panic "docker-compose down mediawiki failed?"
@@ -54,7 +58,7 @@ function start_miniflux() {
     ./run.sh ||
         panic "miniflux run failed?"
 
-    cd ..
+    cd ../../..
 }
 
 function stop_miniflux() {
@@ -64,7 +68,7 @@ function stop_miniflux() {
     docker-compose -p miniflux down ||
         panic "docker-compose down miniflux failed?"
 
-    cd ..
+    cd ../../..
 }
 
 #
@@ -78,7 +82,7 @@ function start_sourcegraph() {
     docker-compose -p sourcegraph up -d ||
         panic "docker-compose up sorcegraph failed?"
 
-    cd ..
+    cd ../..
 }
 
 function stop_sourcegraph() {
@@ -88,7 +92,7 @@ function stop_sourcegraph() {
     docker-compose -p sourcegraph down ||
         panic "docker-compose down sorcegraph failed?"
 
-    cd ..
+    cd ../..
 }
 
 #
@@ -157,7 +161,7 @@ function on_start() {
     for srv in $srvs; do
         local do_start="start_$srv"
         assert_is_function "$do_start"
-        do_start
+        $do_start
     done
 }
 
@@ -166,6 +170,6 @@ function on_stop() {
     for srv in $srvs; do
         local do_stop="stop_$srv"
         assert_is_function "$do_stop"
-        do_stop
+        $do_stop
     done
 }
