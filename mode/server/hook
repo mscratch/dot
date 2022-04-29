@@ -1,74 +1,40 @@
 #!/bin/bash
 
 # TODO: make service expose nothing to public (except for caddy)
-
-#
-# mediawiki hooks
-#
-
-function start_mediawiki() {
-    cd mediawiki ||
-        panic "mediawiki dir not found?"
-
-    # build docker images first
-    ./build.sh ||
-        panic "mediawiki build docker image failed?"
-
-    # up!
-    docker-compose -p mediawiki up -d  ||
-        panic "docker-compose up mediawiki failed?"
-
-    # if config exists, copy it! TODO
-    if [[ -f LocalSettings.php ]]; then
-        wm_container=$(docker ps -f "publish=2012" --format '{{.Names}}')
-        docker cp ./LocalSettings.php "$wm_container":/var/www/html/ ||
-            panic "docker cp to mediawiki faild?"
-    fi
-
-    cd ..
-}
-
-function stop_mediawiki() {
-    cd mediawiki ||
-        panic "mediawiki dir not found?"
-
-    # backup the config first; when compose down, it won't be persisted (not in volume)
-    wm_container=$(docker ps -f "publish=2012" --format '{{.Names}}')
-    if [[ $wm_container ]]; then
-        docker cp "$wm_container":/var/www/html/LocalSettings.php ./ ||
-            panic "docker cp from mediawiki failed?"
-    fi
-
-    # down
-    docker-compose -p mediawiki down ||
-        panic "docker-compose down mediawiki failed?"
-
-    cd ..
-}
+# TODO: config update
 
 #
 # miniflux hooks
 #
 
 function start_miniflux() {
-    cd "miniflux/contrib/docker-compose" ||
+    cd "miniflux" ||
         panic "miniflux dir not found?"
 
-    # calling the run (will display the password!)
-    ./run.sh ||
-        panic "miniflux run failed?"
+    # generating a password if not exists
+    if [[ ! -f .env ]]; then
+        cat > .env <<EOF
+ADMIN_USERNAME=krnl
+ADMIN_PASSWORD=$(head -c 4096 /dev/urandom | sha256sum -b | head -c 16)
+EOF
+        cat .env
+    fi
 
-    cd ../../..
+    # up!
+    docker-compose -p miniflux up -d ||
+        panic "docker-compose up miniflux failed?"
+
+    cd ..
 }
 
 function stop_miniflux() {
-    cd "miniflux/contrib/docker-compose" ||
+    cd "miniflux" ||
         panic "miniflux dir not found?"
 
     docker-compose -p miniflux down ||
         panic "docker-compose down miniflux failed?"
 
-    cd ../../..
+    cd ..
 }
 
 #
@@ -76,23 +42,23 @@ function stop_miniflux() {
 #
 
 function start_sourcegraph() {
-    cd "sourcegraph/docker-compose" ||
+    cd "sourcegraph" ||
         panic "sourcegraph dir not found?"
 
     docker-compose -p sourcegraph up -d ||
         panic "docker-compose up sorcegraph failed?"
 
-    cd ../..
+    cd ..
 }
 
 function stop_sourcegraph() {
-    cd "sourcegraph/docker-compose" ||
+    cd "sourcegraph" ||
         panic "sourcegraph dir not found?"
 
     docker-compose -p sourcegraph down ||
         panic "docker-compose down sorcegraph failed?"
 
-    cd ../..
+    cd ..
 }
 
 #
@@ -119,8 +85,8 @@ function start_caddy() {
     # TODO: always relink?
     if [[ ! -e ~/.config/systemd/user/caddy.service ]]; then
         mkdir -p ~/.config/systemd/user
-        sed "s%\$CADDYBIN%$PWD/caddy%g" init/caddy.service > ~/.config/systemd/user/caddy.service
-        sed -i "s%\$CADDYFILE%$PWD/config/Caddyfile%g" ~/.config/systemd/user/caddy.service
+        sed "s%\$CADDYBIN%$PWD/caddy%g" caddy.service > ~/.config/systemd/user/caddy.service
+        sed -i "s%\$CADDYFILE%$PWD/Caddyfile%g" ~/.config/systemd/user/caddy.service
 
         # FIXME: no prompt? seems impossible...
         read -rp "dnspod_appid: " app_id
