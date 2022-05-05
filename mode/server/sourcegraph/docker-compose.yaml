@@ -95,7 +95,7 @@ services:
       sourcegraph-frontend-internal:
         condition: service_healthy
     ports:
-      - '0.0.0.0:3080:3080'
+      - '127.0.0.1:3080:3080'
 
   # Description: Serves the internal Sourcegraph frontend API.
   #
@@ -361,7 +361,7 @@ services:
       start_period: 15s
     volumes:
       - 'pgsql:/data/'
-      - '../pgsql/conf:/conf/'
+      - './pgsql/conf:/conf/'
     networks:
       - sourcegraph
     restart: always
@@ -388,7 +388,7 @@ services:
       start_period: 15s
     volumes:
       - 'codeintel-db:/data/'
-      - '../codeintel-db/conf:/conf/'
+      - './codeintel-db/conf:/conf/'
     networks:
       - sourcegraph
     restart: always

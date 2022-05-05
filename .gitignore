@@ -6,3 +6,7 @@
 
 # miniflux env
 **/miniflux/.env
+
+# sourcegraph volumes (?)
+**/sourcegraph/codeintel-db
+**/sourcegraph/pgsql
