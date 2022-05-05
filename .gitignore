@@ -1,2 +1,8 @@
 # configurations
 .config
+
+# caddy binary
+**/caddy/caddy
+
+# miniflux env
+**/miniflux/.env

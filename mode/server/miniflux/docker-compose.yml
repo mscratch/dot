@@ -1,0 +1,33 @@
+version: '3.4'
+services:
+  miniflux:
+    image: miniflux/miniflux:2.0.36
+    container_name: miniflux
+    restart: always
+    ports:
+      - "0.0.0.0:2975:8080"
+    depends_on:
+      - db
+    env_file:
+      - '.env'
+    environment:
+      - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable
+      - RUN_MIGRATIONS=1
+      - CREATE_ADMIN=1
+    # Optional health check:
+    # healthcheck:
+    #  test: ["CMD", "/usr/bin/miniflux", "-healthcheck", "auto"]
+  db:
+    image: postgres:14.2-alpine3.15
+    restart: always
+    environment:
+      - POSTGRES_USER=miniflux
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - miniflux-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s
+volumes:
+  miniflux-db:

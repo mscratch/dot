@@ -1,0 +1,22 @@
+# https://caddyserver.com/docs/caddyfile/patterns#wildcard-certificates
+*.irq.x86.archi {
+    tls {
+		# apply a token in https://console.dnspod.cn/account/token/apikey
+        dns dnspod {env.DNSPOD_TOKEN}
+    }
+
+    @gitlab host context.irq.x86.archi
+    handle @gitlab {
+        reverse_proxy 127.0.0.1:2012
+    }
+
+	@miniflux host feed.irq.x86.archi
+	handle @miniflux {
+		reverse_proxy 127.0.0.1:2975
+	}
+
+	@sourceinsight host src.irq.x86.archi
+	handle @sourceinsight {
+		reverse_proxy 127.0.0.1:3080
+	}
+}
