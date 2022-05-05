@@ -1,7 +1,39 @@
 #!/bin/bash
 
 # TODO: make service expose nothing to public (except for caddy)
-# TODO: config update
+# TODO: config update (upgrade)
+
+#
+# gitlab hooks
+#
+
+function start_gitlab() {
+    cd "gitlab" ||
+        panic "gitlab dir not found?"
+
+    # check for soft link of config
+    if [[ ! -L /etc/gitlab/gitlab.rb ]]; then
+        # TODO: check link dst
+        sudo systemctl stop gitlab-runsvdir ||
+            panic "systemctl stop gitlab failed?"
+
+        # link the config file to it
+        sudo ln -sfv "$PWD/gitlab.rb" /etc/gitlab/gitlab.rb ||
+            panic "link gitlab.rb failed?"
+    fi
+
+    # we're using the systemctl...
+    sudo systemctl enable gitlab-runsvdir
+    sudo systemctl start gitlab-runsvdir ||
+        panic "systemctl start gitlab failed?"
+
+    cd ..
+}
+
+function stop_gitlab() {
+    sudo systemctl stop gitlab-runsvdir ||
+        panic "systemctl stop gitlab failed?"
+}
 
 #
 # miniflux hooks
@@ -63,7 +95,7 @@ function stop_sourcegraph() {
 
 #
 # caddy hooks
-# TODO: docker?
+# TODO: docker? run as other user?
 #
 
 function start_caddy() {
