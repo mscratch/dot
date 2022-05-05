@@ -1,5 +1,7 @@
 version: '2.4'
 services:
+  # https://raw.githubusercontent.com/sourcegraph/deploy-sourcegraph-docker/v3.39.1/docker-compose/docker-compose.yaml
+
   # Description: This container will migrate the Postgres `frontend`,
   # `codeintel`, and `codeinsights` databases
   #
@@ -13,7 +15,7 @@ services:
   # for this container will need to be updated to reflect the new connection information.
   migrator:
     container_name: migrator
-    image: 'index.docker.io/sourcegraph/migrator:3.38.1@sha256:4bd4fd68fc3e6d1c947847aec126ff8c4577da80cbd11252c6c72a482722ad66'
+    image: 'index.docker.io/sourcegraph/migrator:3.39.1@sha256:d2658c0fa4ff4fe0487cef7983f00566f4533d5ad143f9ddb910310c6d011dfc'
     cpus: 0.5
     mem_limit: '500m'
     command:
@@ -36,11 +38,11 @@ services:
       # If you are not running code insights, please see: 
       # https://docs.sourcegraph.com/admin/install/docker-compose/operations#database-migrations for more information
       # for information on how to configure Sourcegraph migrations
-      - CODEINSIGHTS_PGHOST=codeinsights-db
+      - CODEINSIGHTS_PGHOST=pgsql
       - CODEINSIGHTS_PGPORT=5432
-      - CODEINSIGHTS_PGUSER=postgres
-      - CODEINSIGHTS_PGPASSWORD=password
-      - CODEINSIGHTS_PGDATABASE=postgres
+      - CODEINSIGHTS_PGUSER=sg
+      - CODEINSIGHTS_PGPASSWORD=sg
+      - CODEINSIGHTS_PGDATABASE=sg
       - CODEINSIGHTS_PGSSLMODE=disable
     restart: "on-failure"
     networks: 
@@ -63,14 +65,14 @@ services:
   # service.
   sourcegraph-frontend-0:
     container_name: sourcegraph-frontend-0
-    image: 'index.docker.io/sourcegraph/frontend:3.38.1@sha256:ffa092eadcfa4f88f3237ada173a962521ba97066af2cb572f0ac740a18cbf10'
+    image: 'index.docker.io/sourcegraph/frontend:3.39.1@sha256:88758c0f768f2e5dc437691939b8ba730055b2309cfda8982f7e80ccb56aa0fe'
     cpus: 4
     mem_limit: '8g'
     environment:
       - DEPLOY_TYPE=docker-compose
       - PGHOST=pgsql
       - CODEINTEL_PGHOST=codeintel-db
-      - CODEINSIGHTS_PGDATASOURCE=postgres://postgres:password@codeinsights-db:5432/postgres
+      - CODEINSIGHTS_PGDATASOURCE=postgres://sg:sg@pgsql:5432/sg
       - 'SRC_GIT_SERVERS=gitserver-0:3178'
       - 'SRC_SYNTECT_SERVER=http://syntect-server:9238'
       - 'SEARCHER_URL=http://searcher-0:3181'
@@ -103,14 +105,14 @@ services:
   #
   sourcegraph-frontend-internal:
     container_name: sourcegraph-frontend-internal
-    image: 'index.docker.io/sourcegraph/frontend:3.38.1@sha256:ffa092eadcfa4f88f3237ada173a962521ba97066af2cb572f0ac740a18cbf10'
+    image: 'index.docker.io/sourcegraph/frontend:3.39.1@sha256:88758c0f768f2e5dc437691939b8ba730055b2309cfda8982f7e80ccb56aa0fe'
     cpus: 4
     mem_limit: '8g'
     environment:
       - DEPLOY_TYPE=docker-compose
       - PGHOST=pgsql
       - CODEINTEL_PGHOST=codeintel-db
-      - CODEINSIGHTS_PGDATASOURCE=postgres://postgres:password@codeinsights-db:5432/postgres
+      - CODEINSIGHTS_PGDATASOURCE=postgres://sg:sg@pgsql:5432/sg
       - 'SRC_GIT_SERVERS=gitserver-0:3178'
       - 'SRC_SYNTECT_SERVER=http://syntect-server:9238'
       - 'SEARCHER_URL=http://searcher-0:3181'
@@ -145,7 +147,7 @@ services:
   #
   gitserver-0:
     container_name: gitserver-0
-    image: 'index.docker.io/sourcegraph/gitserver:3.38.1@sha256:f4afde31c06adf8f9b1e5b6dd1768934be5b5e71a2eff111d4e0955288ee1d85'
+    image: 'index.docker.io/sourcegraph/gitserver:3.39.1@sha256:a793d27673b84ced8dd10959559bb28f648aafd72cf032ed0f4294bb3fa4293a'
     cpus: 4
     mem_limit: '8g'
     environment:
@@ -167,7 +169,7 @@ services:
   #
   zoekt-indexserver-0:
     container_name: zoekt-indexserver-0
-    image: 'index.docker.io/sourcegraph/search-indexer:3.38.1@sha256:5460a1aa43825d7241d9b203bc98eadf067dd986fc4a3887311425e5723ad4b7'
+    image: 'index.docker.io/sourcegraph/search-indexer:3.39.1@sha256:9a86571b5a2740f94f8396cf783d4e990b2d2b62fb7a9f9651718083d5be27a7'
     cpus: 8
     mem_limit: '16g'
     environment:
@@ -188,7 +190,7 @@ services:
   #
   zoekt-webserver-0:
     container_name: zoekt-webserver-0
-    image: 'index.docker.io/sourcegraph/indexed-searcher:3.38.1@sha256:0c2b31f1b5be6e851676c6df678dee74fd51733a4c230942a52876384f263e6b'
+    image: 'index.docker.io/sourcegraph/indexed-searcher:3.39.1@sha256:d4bb62056bfc0d711779cab440355875f253acc844db75b6f1f7d9d2d7e12426'
     cpus: 8
     mem_limit: '50g'
     environment:
@@ -213,7 +215,7 @@ services:
   #
   searcher-0:
     container_name: searcher-0
-    image: 'index.docker.io/sourcegraph/searcher:3.38.1@sha256:855d30ac0464406b3f50f7e38eadc652fcee222875d5fe42bd6264e7d5c08e74'
+    image: 'index.docker.io/sourcegraph/searcher:3.39.1@sha256:02393e442e461b4de32be14d8a0954990fd1b21dfe8e3b21f21e17f36f44db61'
     cpus: 2
     mem_limit: '2g'
     environment:
@@ -236,7 +238,7 @@ services:
   #
   precise-code-intel-worker:
     container_name: precise-code-intel-worker
-    image: 'index.docker.io/sourcegraph/precise-code-intel-worker:3.38.1@sha256:0a022c64888e3a6a278e785b04c4a9951cd69120f32f7c221a4304d9427d9a5c'
+    image: 'index.docker.io/sourcegraph/precise-code-intel-worker:3.39.1@sha256:65269810bb887422d67dd92a20337d14e4c6f54a54dbb660e72ec68ee54cc17d'
     cpus: 2
     mem_limit: '4g'
     environment:
@@ -259,7 +261,7 @@ services:
   #
   repo-updater:
     container_name: repo-updater
-    image: 'index.docker.io/sourcegraph/repo-updater:3.38.1@sha256:69089ffe66361fbbb9bb5c7655dd605a8f9fdca008e810778b875c5a0eb075fc'
+    image: 'index.docker.io/sourcegraph/repo-updater:3.39.1@sha256:45b7bc2af8c9d2d6e757bac8e60abdee547eae37c14ab495e533a61ef7c636e4'
     cpus: 4
     mem_limit: '4g'
     environment:
@@ -278,7 +280,7 @@ services:
   #
   worker:
     container_name: worker
-    image: 'index.docker.io/sourcegraph/worker:3.38.1@sha256:4b901440c33f9e8164caea744f6af2e492a3a11b00db11083c1ab9e6e27e8fc6'
+    image: 'index.docker.io/sourcegraph/worker:3.39.1@sha256:08ce99589a858e5ad5013ac0cb88e8f306bb53d6bbce6a66c884b74c73d0667d'
     cpus: 4
     mem_limit: '4g'
     environment:
@@ -301,7 +303,7 @@ services:
   #
   syntect-server:
     container_name: syntect-server
-    image: 'index.docker.io/sourcegraph/syntax-highlighter:3.38.1@sha256:8aa2dafdbb6f6110f0fab4f736ef2e067b9b67ec862ba1b3659ef271cfd0cbaa'
+    image: 'index.docker.io/sourcegraph/syntax-highlighter:3.39.1@sha256:a578895f366291a2a32e2ed7ff6b3d47f4f013026fb35b76ef3c16080ea2e8ba'
     cpus: 4
     mem_limit: '6g'
     healthcheck:
@@ -322,7 +324,7 @@ services:
   #
   symbols-0:
     container_name: symbols-0
-    image: 'index.docker.io/sourcegraph/symbols:3.38.1@sha256:5f6ae02830c1fdd61ef5283fe626f2d274ac07a83a11858002baa0aa555a4013'
+    image: 'index.docker.io/sourcegraph/symbols:3.39.1@sha256:39410eb27ed6b0553980d3dbf59caf24d18141aa7420dc30574bf462175bc828'
     cpus: 2
     mem_limit: '4g'
     environment:
@@ -347,9 +349,10 @@ services:
   #
   pgsql:
     container_name: pgsql
-    image: 'index.docker.io/sourcegraph/postgres-12-alpine:3.38.1@sha256:7c26495d210b33755aa771a37fbd07452ff84ec03126d56b699fbc62484d2b63'
+    image: 'index.docker.io/sourcegraph/postgres-12-alpine:3.39.1@sha256:73ddf3f2ada2e20542982381744942d7326ccd01217e6f5b3d09ed6e41b84fa6'
     cpus: 4
-    mem_limit: '2g'
+    mem_limit: '4g'
+    shm_size: '1g'
     healthcheck:
       test: '/liveness.sh'
       interval: 10s
@@ -358,6 +361,7 @@ services:
       start_period: 15s
     volumes:
       - 'pgsql:/data/'
+      - '../pgsql/conf:/conf/'
     networks:
       - sourcegraph
     restart: always
@@ -372,9 +376,10 @@ services:
   #
   codeintel-db:
     container_name: codeintel-db
-    image: 'index.docker.io/sourcegraph/codeintel-db:3.38.1@sha256:1827803cfe945947c8241662868ceee75f8c012f465a8e83857254160d94491f'
+    image: 'index.docker.io/sourcegraph/codeintel-db:3.39.1@sha256:b2d08f7b6d8e58e46c14016de4a256f387bcbbbfe1c60c055ecf9ff0596156f2'
     cpus: 4
-    mem_limit: '2g'
+    mem_limit: '4g'
+    shm_size: '1g'
     healthcheck:
       test: '/liveness.sh'
       interval: 10s
@@ -383,32 +388,7 @@ services:
       start_period: 15s
     volumes:
       - 'codeintel-db:/data/'
-    networks:
-      - sourcegraph
-    restart: always
-    stop_grace_period: 120s
-
-  # Description: TimescaleDB time-series database for code insights data.
-  #
-  # Disk: 128GB / persistent SSD
-  # Network: 1Gbps
-  # Ports exposed to other Sourcegraph services: 5432/TCP 9187/TCP
-  # Ports exposed to the public internet: none
-  #
-  # Note: You should deploy this as a container, do not try to connect it to your external
-  # Postgres deployment (TimescaleDB is a bit special and most hosted Postgres deployments
-  # do not support TimescaleDB, the data here is akin to gitserver's data, where losing it
-  # would be bad but it can be rebuilt given enough time.)
-  codeinsights-db:
-    container_name: codeinsights-db
-    image: 'index.docker.io/sourcegraph/codeinsights-db:3.38.1@sha256:d370303e464af5fa4fc46f7dca2f2e7875cbe220b9c13f2f7fc1a1f1c2692951'
-    cpus: 4
-    mem_limit: '2g'
-    environment:
-      - POSTGRES_PASSWORD=password
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - 'codeinsights-db:/var/lib/postgresql/data/'
+      - '../codeintel-db/conf:/conf/'
     networks:
       - sourcegraph
     restart: always
@@ -423,7 +403,7 @@ services:
   #
   minio:
     container_name: minio
-    image: 'index.docker.io/sourcegraph/minio:3.38.1@sha256:0daf4c0c821634eeefbf90f48d467eece09597aff5d9f582685c8c875f03e6fa'
+    image: 'index.docker.io/sourcegraph/minio:3.39.1@sha256:0daf4c0c821634eeefbf90f48d467eece09597aff5d9f582685c8c875f03e6fa'
     cpus: 1
     mem_limit: '1g'
     environment:
@@ -450,7 +430,7 @@ services:
   #
   redis-cache:
     container_name: redis-cache
-    image: 'index.docker.io/sourcegraph/redis-cache:3.38.1@sha256:be29558d6958c662b511bbe3d32393a8d6007383bcfce60c8c7bd5490e024d81'
+    image: 'index.docker.io/sourcegraph/redis-cache:3.39.1@sha256:055191a7cabd8afb01c01b71b3960ff50ef8a824ad6887bab7a952be82c08a57'
     cpus: 1
     mem_limit: '7g'
     volumes:
@@ -466,7 +446,7 @@ services:
   #
   redis-store:
     container_name: redis-store
-    image: 'index.docker.io/sourcegraph/redis-store:3.38.1@sha256:b99136df6ea7006f95d7e9c66898b403e2bec88e2e9c78a5f6653f81973149a4'
+    image: 'index.docker.io/sourcegraph/redis-store:3.39.1@sha256:3f7a9eb2303a0265cf37eecad2efe0d34929f3cafbef1de6ff42e7399d3694b8'
     cpus: 1
     mem_limit: '7g'
     volumes:
@@ -479,7 +459,6 @@ volumes:
   gitserver-0:
   pgsql:
   codeintel-db:
-  codeinsights-db:
   minio:
   redis-cache:
   redis-store:
