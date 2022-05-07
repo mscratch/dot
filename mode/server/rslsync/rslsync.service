@@ -1,0 +1,13 @@
+# https://aur.archlinux.org/cgit/aur.git/tree/rslsync_user.service?h=rslsync
+
+[Unit]
+Description=Resilio Sync per-user service
+After=network.target
+ 
+[Service]
+Type=simple
+ExecStart=$RSLSYNC_PATH/rslsync --nodaemon --config $RSLSYNC_PATH/rslsync.conf
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

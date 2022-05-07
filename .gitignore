@@ -10,3 +10,6 @@
 # sourcegraph volumes (?)
 **/sourcegraph/codeintel-db
 **/sourcegraph/pgsql
+
+# rslsync
+**/rslsync/rslsync

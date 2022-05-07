@@ -4,6 +4,48 @@
 # TODO: config update (upgrade)
 
 #
+# resilio sync hooks
+#
+
+function start_rslsync() {
+    cd "rslsync" ||
+        panic "rslsync dir not found?"
+
+    if [[ ! -f rslsync ]]; then
+        # download the binary; TODO: check update?
+        local output_file="rslsync_x64-2.7.3-1.tar.gz"
+        wget "https://download-cdn.resilio.com/stable/linux-x64/resilio-sync_x64.tar.gz" -O $output_file
+        tar -xf $output_file ||
+            panic "untar rslsync file failed?"
+        rm -fv $output_file
+    fi
+
+    if [[ ! -e ~/.config/systemd/user/rslsync.service ]]; then
+        sed "s%\$RSLSYNC_PATH%$PWD%g" rslsync.service > ~/.config/systemd/user/rslsync.service
+        # reload daemon
+        systemctl --user daemon-reload
+    fi
+
+    if grep -q "\$PASSWORD" rslsync.conf; then
+        # generate a password in-place; TODO: git?
+        local passwd
+        passwd="$(openssl rand -base64 16)"
+        sed -i "s%\$PASSWORD%$(echo -n "$passwd" | sha256sum | awk '{print $1}')%g" rslsync.conf
+        echo "KEEP_PASSWORD: \`$passwd\`"
+    fi
+
+    systemctl enable --user rslsync ||
+        panic "systemctl enable rslsync failed?"
+    systemctl start --user rslsync ||
+        panic "systemctl start rslsync failed?"
+}
+
+function stop_rslsync() {
+    systemctl stop --user rslsync ||
+        panic "systemctl stop rslsync failed?"
+}
+
+#
 # gitlab hooks
 #
 
