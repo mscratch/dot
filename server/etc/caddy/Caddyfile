@@ -1,0 +1,21 @@
+# https://caddyserver.com/docs/caddyfile/patterns#wildcard-certificates
+*.ion.x86.st {
+    tls {
+        dns gandi {env.GANDI_API_TOKEN}
+    }
+
+    @gitlab host at.ion.x86.st
+    handle @gitlab {
+        reverse_proxy 127.0.0.1:8181
+    }
+
+    @miniflux host fx.ion.x86.st
+    handle @miniflux {
+        reverse_proxy 127.0.0.1:2975
+    }
+
+    @sourceinsight host src.ion.x86.st
+    handle @sourceinsight {
+        reverse_proxy 127.0.0.1:3080
+    }
+}

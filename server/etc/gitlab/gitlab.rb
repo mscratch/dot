@@ -29,7 +29,7 @@
 ##! On AWS EC2 instances, we also attempt to fetch the public hostname/IP
 ##! address from AWS. For more details, see:
 ##! https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
-external_url 'https://context.irq.x86.archi'
+external_url 'https://at.ion.x86.st'
 
 ## Roles for multi-instance GitLab
 ##! The default is to have no roles enabled, which results in GitLab running as an all-in-one instance.
@@ -389,7 +389,7 @@ gitlab_rails['trusted_proxies'] = ['127.0.0.1']
 
 ### GitLab uploads
 ###! Docs: https://docs.gitlab.com/ee/administration/uploads.html
-# gitlab_rails['uploads_directory'] = "/var/opt/gitlab/gitlab-rails/uploads"
+gitlab_rails['uploads_directory'] = "/box/srv/gitlab/gitlab-rails/uploads"
 # gitlab_rails['uploads_storage_path'] = "/opt/gitlab/embedded/service/gitlab-rails/public"
 # gitlab_rails['uploads_base_dir'] = "uploads/-/system"
 # gitlab_rails['uploads_object_store_enabled'] = false
@@ -539,7 +539,7 @@ gitlab_rails['trusted_proxies'] = ['127.0.0.1']
 
 ### OmniAuth Settings
 ###! Docs: https://docs.gitlab.com/ee/integration/omniauth.html
-# gitlab_rails['omniauth_enabled'] = nil
+gitlab_rails['omniauth_enabled'] = false
 # gitlab_rails['omniauth_allow_single_sign_on'] = ['saml']
 # gitlab_rails['omniauth_sync_email_from_provider'] = 'saml'
 # gitlab_rails['omniauth_sync_profile_from_provider'] = ['saml']
@@ -639,11 +639,11 @@ gitlab_rails['trusted_proxies'] = ['127.0.0.1']
 ###! Docs: https://docs.gitlab.com/omnibus/settings/configuration.html#store-git-data-in-an-alternative-directory
 ###! **If you want to use a single non-default directory to store git data use a
 ###!   path that doesn't contain symlinks.**
-# git_data_dirs({
-#   "default" => {
-#     "path" => "/mnt/nfs-01/git-data"
-#    }
-# })
+git_data_dirs({
+  "default" => {
+    "path" => "/box/srv/gitlab/git-data"
+   }
+})
 
 ### Gitaly settings
 # gitlab_rails['gitaly_token'] = 'secret token'
@@ -658,7 +658,7 @@ gitlab_rails['trusted_proxies'] = ['127.0.0.1']
 
 ### Wait for file system to be mounted
 ###! Docs: https://docs.gitlab.com/omnibus/settings/configuration.html#only-start-omnibus-gitlab-services-after-a-given-file-system-is-mounted
-# high_availability['mountpoint'] = ["/var/opt/gitlab/git-data", "/var/opt/gitlab/gitlab-rails/shared"]
+high_availability['mountpoint'] = ["/box"]
 
 ### GitLab Shell settings for GitLab
 gitlab_rails['gitlab_shell_ssh_port'] = 1984
@@ -1380,7 +1380,7 @@ gitlab_workhorse['listen_addr'] = "127.0.0.1:8181"
 
 ##! When bundled nginx is disabled we need to add the external webserver user to
 ##! the GitLab webserver group.
-web_server['external_users'] = ['kirby']
+web_server['external_users'] = ['caddy']
 # web_server['username'] = 'gitlab-www'
 # web_server['group'] = 'gitlab-www'
 # web_server['uid'] = nil
@@ -1515,6 +1515,9 @@ nginx['listen_https'] = false
 #    "deny" => "all" # Deny access to anyone else
 #  }
 # }
+nginx['status'] = {
+  'enable' => false
+}
 
 ##! Service name used to register Nginx as a Consul service
 # nginx['consul_service_name'] = 'nginx'
